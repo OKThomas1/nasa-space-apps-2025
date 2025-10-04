@@ -4,10 +4,12 @@ import { ToolBar } from "./ToolBar"
 
 function App() {
     return (
-        <>
+        <div className="relative h-screen w-screen">
             <MapView />
-            <ToolBar />
-        </>
+            <div className="absolute z-10 top-0">
+                <ToolBar />
+            </div>
+        </div>
     )
 }
 
