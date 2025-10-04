@@ -1,14 +1,16 @@
-    {
-      "compilerOptions": {
+{
+    "compilerOptions": {
         "target": "esnext",
         "module": "esnext",
         "outDir": "./dist",
         "rootDir": "./src",
         "strict": true,
+        "moduleResolution": "node",
         "esModuleInterop": true,
+        "allowJs": true,
         "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true
-      },
-      "include": ["src/**/*.ts"],
-      "exclude": ["node_modules"]
-    }
+    },
+    "include": ["src/**/*.ts"],
+    "exclude": ["node_modules"]
+}

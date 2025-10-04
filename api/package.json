@@ -3,16 +3,24 @@
   "version": "1.0.0",
   "type": "module",
   "dependencies": {
+    "@chunkd/source": "^11.1.0",
+    "@chunkd/source-file": "^11.0.1",
+    "@cogeotiff/core": "^9.1.0",
     "@types/express": "^5.0.3",
     "@types/node": "^24.6.2",
+    "@types/proj4": "^2.19.0",
+    "cors": "^2.8.5",
     "express": "^5.1.0",
+    "form-data": "^4.0.4",
     "prettier": "^3.6.2",
+    "proj4": "2.9.2",
     "typescript": "^5.9.3"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.19",
     "tsx": "^4.20.6"
   },
   "scripts": {
-    "watch": "tsx ./src/index.ts"
+    "watch": "tsx --watch ./src/index.ts"
   }
 }
