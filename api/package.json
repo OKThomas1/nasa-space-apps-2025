@@ -1,0 +1,19 @@
+{
+  "name": "api",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.6.2",
+    "prettier": "^3.6.2",
+    "typescript": "^5.9.3"
+  },
+  "devDependencies": {
+    "tsx": "^4.20.6"
+  },
+  "scripts": {
+    "watch": "tsx ./src/index.ts"
+  }
+}
