@@ -6,16 +6,11 @@ import {
     type FunctionComponent,
     type PropsWithChildren,
 } from "react"
-
-interface Tool {
-    id: string
-    displayName: string
-    icon: string
-}
+import type { Tool } from "./Tools"
 
 type ToolContext = {
     tool: Tool | undefined
-    setTool: (tool: Tool) => void
+    setTool: (tool: Tool | undefined) => void
 }
 
 const ToolContext = createContext<ToolContext | undefined>(undefined)
