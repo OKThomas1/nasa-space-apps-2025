@@ -1,0 +1,75 @@
+{
+    // ---------- Editor Basics ----------
+    "editor.formatOnSave": true,
+    "editor.tabSize": 4,
+    "editor.insertSpaces": false,
+    "editor.detectIndentation": false,
+    "editor.rulers": [100],
+    "editor.wordWrap": "on",
+    "editor.codeActionsOnSave": {
+        "source.fixAll": "explicit",
+        "source.organizeImports": "explicit"
+    },
+
+    // ---------- TypeScript / JavaScript ----------
+    "[typescript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[typescriptreact]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[javascript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[javascriptreact]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+
+    // ---------- Prettier ----------
+    "prettier.useTabs": true,
+    "prettier.tabWidth": 4,
+    "prettier.singleQuote": false,
+    "prettier.semi": false,
+    "prettier.trailingComma": "es5",
+    "prettier.quoteProps": "as-needed",
+    "prettier.requireConfig": true,
+    "prettier.useEditorConfig": true,
+
+    // ---------- ESLint ----------
+    "eslint.validate": [
+        "javascript",
+        "javascriptreact",
+        "typescript",
+        "typescriptreact"
+    ],
+    "eslint.run": "onType",
+    "eslint.enable": true,
+
+    // ---------- Monorepo / Yarn ----------
+    "npm.packageManager": "yarn",
+    "search.exclude": {
+        "**/node_modules": true,
+        "**/dist": true,
+        "**/.yarn": true,
+    },
+    "typescript.tsdk": "node_modules/typescript/lib",
+    "files.watcherExclude": {
+        "**/.env": true
+    },
+
+    // ---------- Quality of Life ----------
+    "files.eol": "\n",
+    "files.insertFinalNewline": true,
+    "files.trimTrailingWhitespace": true,
+    "workbench.editorAssociations": {
+        "*.svg": "default"
+    },
+    "breadcrumbs.enabled": true,
+    "editor.minimap.enabled": false,
+    "workbench.startupEditor": "none",
+    "editor.linkedEditing": true,
+
+    // ---------- Extensions / Tools ----------
+    "postman.settings.dotenv-detection-notification-visibility": false
+}
+
