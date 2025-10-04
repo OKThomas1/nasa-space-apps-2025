@@ -1,11 +1,14 @@
+import "maplibre-gl/dist/maplibre-gl.css"
 import Map from "react-map-gl/maplibre"
 import { useLayers } from "../hooks/useLayers"
+import { PlaceableLayer } from "../PlaceableLayer"
+import { ToolPlacementLayer } from "../ToolPlacementLayer"
 import { DeckGLOverlay } from "./DeckglOverlay"
 
 export const MapView = () => {
     const layers = useLayers()
     return (
-        <div className="relative w-full h-full overflow-hidden">
+        <div className="w-screen h-screen">
             <Map
                 // initialViewState={{
                 //     longitude: -80,
@@ -24,6 +27,9 @@ export const MapView = () => {
                 preserveDrawingBuffer={true}
             >
                 <DeckGLOverlay interleaved={true} layers={layers} />
+
+                <PlaceableLayer />
+                <ToolPlacementLayer />
             </Map>
         </div>
     )
