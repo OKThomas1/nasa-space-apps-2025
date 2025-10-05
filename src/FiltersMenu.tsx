@@ -1,6 +1,6 @@
 import Slider from "@mui/material/Slider"
 import Switch from "@mui/material/Switch"
-import { FunctionComponent } from "react"
+import { type FunctionComponent } from "react"
 import { useFiltersContext } from "./FiltersContext"
 import { LayerSlidersList } from "./LayerSliders"
 
@@ -11,23 +11,21 @@ export const FiltersMenu: FunctionComponent = () => {
         const updated = [...sliderValues]
         updated[index] = newValue
         setSliderValues(updated)
-        // TODO: connect to map layer opacity or threshold update
     }
 
     const handleToggleChange = (index: number, checked: boolean) => {
         const updated = [...iconToggles]
         updated[index] = checked
         setIconToggles(updated)
-        // TODO: show/hide layer on map here
     }
 
     return (
-        <div className="flex flex-col gap-3 items-center bg-gray-100 p-2 rounded-lg w-fit text-center">
-            <h3 className="text-xl font-semibold text-gray-800">Layer Controls</h3>
+        <div className="flex flex-col gap-3 items-center bg-zinc-700 p-4 rounded-lg w-fit text-center">
+            <h3 className="text-lg font-medium text-gray-200">Layer Opacity Controls</h3>
 
             <div className="flex flex-col flex-wrap items-center gap-6">
                 {LayerSlidersList.map((layer, index) => (
-                    <div key={layer.layer} className="flex flex-col items-center w-[130px]">
+                    <div key={layer.layer} className="flex flex-col items-center w-full">
                         <small className="font-medium capitalize">{layer.layer}</small>
                         <Slider
                             value={sliderValues[index]}
