@@ -1,5 +1,6 @@
 import FactoryIcon from "@mui/icons-material/Factory"
 import ParkIcon from "@mui/icons-material/Park"
+import SearchIcon from "@mui/icons-material/Search"
 import type { ReactNode } from "react"
 
 const buildTool = ({ displayName, icon, id }: Tool): Tool => ({
@@ -9,7 +10,7 @@ const buildTool = ({ displayName, icon, id }: Tool): Tool => ({
 })
 
 export interface Tool {
-    id: "tree" | "factory"
+    id: "tree" | "factory" | "pollution-source"
     displayName: string
     icon: ReactNode
 }
@@ -24,6 +25,11 @@ const ToolsMap: Record<Tool["id"], Tool> = {
         displayName: "Factory",
         icon: <FactoryIcon sx={{ color: "brown" }} />,
         id: "factory",
+    }),
+    "pollution-source": buildTool({
+        displayName: "Pollution Sources",
+        icon: <SearchIcon sx={{ color: "purple" }} />,
+        id: "pollution-source",
     }),
 }
 

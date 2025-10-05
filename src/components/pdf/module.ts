@@ -157,6 +157,12 @@ export const takeMapScreenshot = async (map: MapRef) => {
     // Convert canvas to image data URL
     const imageDataUrl = newCanvas.toDataURL("image/jpeg", 0.95)
 
+    const a = document.createElement("a")
+    a.href = imageDataUrl
+    a.download = "screenshot.jpg"
+    a.click()
+    a.remove()
+
     // Add the image to PDF
     pdf.addImage(imageDataUrl, "JPEG", 0, 0, clampedSw, clampedSh)
 
