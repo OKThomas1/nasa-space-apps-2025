@@ -7,9 +7,10 @@ import {
     type PropsWithChildren,
     type ReactNode,
 } from "react"
+import { useFiltersContext } from "./FiltersContext"
 import { ToolsMap, type Tool } from "./Tools"
 
-interface Placeable {
+export interface Placeable {
     id: string
     type: Tool["id"]
     position: LngLat
@@ -25,7 +26,15 @@ interface PlaceableContext {
 const PlaceableContext = createContext<PlaceableContext | undefined>(undefined)
 
 const PlaceableProvider: FunctionComponent<PropsWithChildren> = ({ children }) => {
+    const { iconToggles } = useFiltersContext()
     const [placed, setPlaced] = useState<Placeable[]>([])
+
+    const treesEnabled = iconToggles[0]
+    const factoriesEnabled = iconToggles[1]
+
+    const filteredPlaced = placed
+        .filter((item) => item.type !== "tree" || treesEnabled)
+        .filter((item) => item.type !== "factory" || factoriesEnabled)
 
     const add: PlaceableContext["add"] = (placeable) => {
         const newPlaceable: Placeable = {
@@ -42,7 +51,7 @@ const PlaceableProvider: FunctionComponent<PropsWithChildren> = ({ children }) =
     }
 
     return (
-        <PlaceableContext.Provider value={{ add, items: placed, remove }}>
+        <PlaceableContext.Provider value={{ add, items: filteredPlaced, remove }}>
             {children}
         </PlaceableContext.Provider>
     )

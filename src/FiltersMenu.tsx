@@ -51,7 +51,7 @@ export const FiltersMenu: FunctionComponent = () => {
             <div className="border-t border-gray-800 w-full"></div>
             <h3 className="text-xl font-semibold text-gray-800">Icon Toggles</h3>
             <div className="flex flex-col flex-wrap items-center gap-2">
-                {["Trees", "PowerPlants"].map((name, index) => (
+                {["Trees", "Factories"].map((name, index) => (
                     <div key={name} className="flex flex-col items-center w-[130px]">
                         <small className="font-medium capitalize">{name}</small>
                         <Switch
