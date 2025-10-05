@@ -7,6 +7,5 @@ export interface Pollutant {
     maxValue: number
     minLabel: string
     maxLabel: string
-    colorStart: string
-    colorEnd: string
+    colors: string[]
 }

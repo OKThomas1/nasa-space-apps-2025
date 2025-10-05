@@ -1,7 +1,7 @@
 import type { HTMLAttributes } from "react"
 import { cn } from "../../lib/utils"
 import { pollutants } from "./constants"
-import { interpolateColor } from "./module"
+import { interpolateGradient } from "./module"
 import type { Pollutant } from "./types"
 
 export const PDFAnnotations = (props: HTMLAttributes<HTMLDivElement>) => {
@@ -54,27 +54,7 @@ export const PDFAnnotations = (props: HTMLAttributes<HTMLDivElement>) => {
 }
 
 const PollutantRow = ({ pollutant }: { pollutant: Pollutant }) => {
-    const generateGradientStops = () => {
-        const stops = []
-        for (let i = 0; i < 10; i++) {
-            const ratio = i / 9
-            stops.push(
-                <div
-                    key={i}
-                    className="flex-1 border-r border-gray-300 last:border-r-0"
-                    style={{
-                        backgroundColor: interpolateColor(
-                            pollutant.colorStart,
-                            pollutant.colorEnd,
-                            ratio
-                        ),
-                        height: "0.4rem",
-                    }}
-                />
-            )
-        }
-        return stops
-    }
+    const colors = interpolateGradient(pollutant.colors, 10) // 10 boxes like before
 
     return (
         <>
@@ -87,7 +67,13 @@ const PollutantRow = ({ pollutant }: { pollutant: Pollutant }) => {
                         {pollutant.minValue}
                     </span>
                     <div className="flex border border-gray-400 flex-1">
-                        {generateGradientStops()}
+                        {colors.map((c, i) => (
+                            <div
+                                key={i}
+                                className="flex-1 border-r border-gray-300 last:border-r-0"
+                                style={{ backgroundColor: c, height: "0.4rem" }}
+                            />
+                        ))}
                     </div>
                     <span className="text-gray-600" style={{ fontSize: "0.45rem" }}>
                         {pollutant.maxValue}
