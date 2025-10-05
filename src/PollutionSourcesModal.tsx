@@ -19,9 +19,9 @@ export const PollutionSourcesModal = ({ open, onClose, data }: PollutionSourcesM
 
     return (
         <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-            <DialogTitle>Pollution Sources</DialogTitle>
+            <DialogTitle className="text-gray-200">Pollution Sources</DialogTitle>
             <DialogContent>
-                <div>
+                <div className="text-zinc-400">
                     {sourceKeys.map((key) => (
                         <div key={key} style={{ marginBottom: "1em" }}>
                             <strong style={{ margin: 0 }}>{key}</strong>

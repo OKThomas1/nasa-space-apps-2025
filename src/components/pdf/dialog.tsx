@@ -14,7 +14,7 @@ export const ThinkingDialog = ({
             </DialogTitle>
             <div className="flex mx-auto items-center mb-8 gap-3 px-4">
                 <CircularProgress size={16} className="mb-1" />
-                <h5 className="text-gray-400 text-center">
+                <h5 className="text-zinc-400 text-center">
                     <ShimmerText>{thinkingStep ? thinkingStep : "Thinking"}</ShimmerText>
                 </h5>
             </div>

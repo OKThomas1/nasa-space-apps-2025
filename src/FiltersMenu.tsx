@@ -20,13 +20,15 @@ export const FiltersMenu: FunctionComponent = () => {
     }
 
     return (
-        <div className="flex flex-col gap-3 items-center bg-zinc-700 p-4 rounded-lg w-fit text-center">
+        <div className="flex flex-col gap-3 items-center bg-zinc-700 p-4 rounded-lg w-fit text-center border border-white/20">
             <h3 className="text-lg font-medium text-gray-200">Layer Opacity Controls</h3>
 
             <div className="flex flex-col flex-wrap items-center gap-6">
                 {LayerSlidersList.map((layer, index) => (
                     <div key={layer.layer} className="flex flex-col items-center w-full">
-                        <small className="font-medium capitalize">{layer.layer}</small>
+                        <small className="font-medium capitalize text-gray-300">
+                            {layer.layer}
+                        </small>
                         <Slider
                             value={sliderValues[index]}
                             min={layer.min}
@@ -34,17 +36,17 @@ export const FiltersMenu: FunctionComponent = () => {
                             step={layer.step}
                             onChange={(_, value) => handleChange(index, value as number)}
                             valueLabelDisplay="auto"
-                            sx={{ width: 120 }}
+                            sx={{ width: 150 }}
                         />
                     </div>
                 ))}
             </div>
-            <div className="border-t border-gray-800 w-full"></div>
-            <h3 className="text-xl font-semibold text-gray-800">Icon Toggles</h3>
+            <div className="border-t border-gray-500 w-full"></div>
+            <h3 className="text-lg font-medium text-gray-200">Icon Toggles</h3>
             <div className="flex flex-col flex-wrap items-center gap-2">
                 {["Trees", "Factories"].map((name, index) => (
                     <div key={name} className="flex flex-col items-center w-[130px]">
-                        <small className="font-medium capitalize">{name}</small>
+                        <small className="font-medium capitalize text-gray-300">{name}</small>
                         <Switch
                             checked={iconToggles[index] ?? true} // read current state
                             onChange={(_, checked) => handleToggleChange(index, checked)} // update context
