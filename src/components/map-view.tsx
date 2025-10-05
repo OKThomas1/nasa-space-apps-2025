@@ -29,9 +29,12 @@ export const MapView = forwardRef<MapRef, { onLoad: () => void }>(
                     const longitude = lngLat.lng
                     setLoading(true)
                     // Send to API
-                    fetch("http://10.16.10.139:3000/get-pollution-sources", {
+                    fetch("https://be6c9b5cc703.ngrok-free.app/get-pollution-sources", {
                         method: "POST",
-                        headers: { "Content-Type": "application/json" },
+                        headers: {
+                            "Content-Type": "application/json",
+                            "ngrok-skip-browser-warning": "true",
+                        },
                         body: JSON.stringify({ latitude, longitude }),
                     })
                         .then(async (res) => {

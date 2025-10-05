@@ -60,10 +60,18 @@ export const pollutionLayer = ({
 
             const { signal } = tile
             const promises = [
-                fetch(`http://10.16.10.139:3000/tempo/${x}/${y}/${z}${params}`, { signal }),
+                fetch(`https://be6c9b5cc703.ngrok-free.app/tempo/${x}/${y}/${z}${params}`, {
+                    signal,
+                    headers: { "ngrok-skip-browser-warning": "true" },
+                }),
             ]
             if (showWeather) {
-                promises.push(fetch(`http://10.16.10.139:3000/weather/${x}/${y}/${z}`, { signal }))
+                promises.push(
+                    fetch(`https://be6c9b5cc703.ngrok-free.app/weather/${x}/${y}/${z}`, {
+                        signal,
+                        headers: { "ngrok-skip-browser-warning": "true" },
+                    })
+                )
             }
             const responses = await Promise.all(promises)
             const tempoResponse = responses[0]
