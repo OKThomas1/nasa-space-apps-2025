@@ -27,7 +27,7 @@ const ToolsMap: Record<Tool["id"], Tool> = {
         id: "factory",
     }),
     "pollution-source": buildTool({
-        displayName: "Pollution Source",
+        displayName: "Pollution Sources",
         icon: <SearchIcon sx={{ color: "purple" }} />,
         id: "pollution-source",
     }),

@@ -98,6 +98,8 @@ export const MapView = forwardRef<MapRef, { onLoad: () => void }>(
                             width: "100vw",
                             height: "100vh",
                             display: "flex",
+                            flexDirection: "column",
+                            gap: "1em",
                             alignItems: "center",
                             justifyContent: "center",
                             background: "rgba(255,255,255,0.5)",
@@ -105,6 +107,9 @@ export const MapView = forwardRef<MapRef, { onLoad: () => void }>(
                         }}
                     >
                         <CircularProgress size={80} />
+                        <strong>
+                            Analyzing location with AI to estimate nearby pollution sources...
+                        </strong>
                     </div>
                 )}
                 <Map

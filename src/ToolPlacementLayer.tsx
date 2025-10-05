@@ -12,6 +12,7 @@ const ToolPlacementLayer = () => {
     useEffect(() => {
         const handleClick = (e: MapMouseEvent) => {
             if (!tool) return
+            if (tool.id === "pollution-source") return
 
             add({ position: e.lngLat, type: tool.id })
         }

@@ -24,14 +24,19 @@ export const PollutionSourcesModal = ({ open, onClose, data }: PollutionSourcesM
                 <div>
                     {sourceKeys.map((key) => (
                         <div key={key} style={{ marginBottom: "1em" }}>
-                            <h3 style={{ margin: 0 }}>{key}</h3>
-                            <strong>Percent:</strong> {data[key].percent}%
-                            <br />
-                            <strong>Reason:</strong> {data[key].reason}
+                            <strong style={{ margin: 0 }}>{key}</strong>
+                            <ul style={{ marginLeft: "1em", listStyleType: "circle" }}>
+                                <li>
+                                    <strong>Percent:</strong> {data[key].percent}%
+                                </li>
+                                <li>
+                                    <strong>Reason:</strong> {data[key].reason}
+                                </li>
+                            </ul>
                         </div>
                     ))}
                     <hr />
-                    <h4>Map Features Detected</h4>
+                    <strong>Map Features Detected</strong>
                     <ul>
                         {Array.isArray(data.map_features_detected) &&
                             data.map_features_detected.map((feature: string) => (
