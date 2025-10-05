@@ -13,7 +13,7 @@ export const PDFSnapshot = ({ onBlur }: { onBlur: () => void }) => {
 
     return (
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-3/7 pointer-events-none">
-            <div className="flex gap-2 justify-end mb-2">
+            <div className="-mt-16 flex gap-2 justify-end mb-2">
                 <Button className="pointer-events-auto" onClick={onBlur}>
                     Cancel
                 </Button>
@@ -39,7 +39,7 @@ export const PDFSnapshot = ({ onBlur }: { onBlur: () => void }) => {
             <div
                 id="pdf-frame"
                 className="border border-white pointer-events-none relative"
-                style={{ aspectRatio: "11 / 8.5", width: "clamp(55rem, 80vh, 90vw)" }}
+                style={{ aspectRatio: "11 / 8.5", width: "clamp(40rem, 80vh, 90vw)" }}
             >
                 <PDFAnnotations
                     actionables={actionables}
