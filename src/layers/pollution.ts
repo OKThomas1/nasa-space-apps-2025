@@ -22,6 +22,7 @@ export const pollutionLayer = ({
         minZoom: 9,
         maxZoom: 14,
         tileSize: 256,
+        maxCacheSize: Infinity,
         updateTriggers: {
             getTileData: [trees.length, factories.length, cars],
         },
@@ -40,13 +41,14 @@ export const pollutionLayer = ({
                 cache.set(key, raster)
             }
 
-            const carMultipler = cars / 25
+            const carMultiplier = 1 + ((cars - 25) / 25) * 0.24
+            console.log({ opacity, cars, trees, factories })
 
             const b = new Blob([
                 Buffer.from(
                     calculatePollutionScore(
                         raster,
-                        carMultipler,
+                        carMultiplier,
                         trees,
                         factories,
                         tile.bbox as GeoBoundingBox,

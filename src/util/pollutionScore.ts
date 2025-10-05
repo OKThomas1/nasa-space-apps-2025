@@ -145,6 +145,10 @@ const createPollutionSourceMap = (
     return sourceMap
 }
 
+const CAR_IMPACT_ON_NO2 = 1.0 // Direct source, full impact
+const CAR_IMPACT_ON_O3 = 0.6 // Significant secondary pollutant
+const CAR_IMPACT_ON_HCHO = 0.4 // Less significant secondary pollutant
+
 export const calculatePollutionScore = (
     tempoBuffer: DataView,
     carMultiplier: number,
@@ -162,8 +166,16 @@ export const calculatePollutionScore = (
                 " found length " +
                 tempoBuffer.byteLength
         )
+
     const scores = new Uint32Array(256 * 256)
     const stats = Array.from({ length: 3 }).map(() => ({ min: Infinity, max: -Infinity, mean: 0 }))
+
+    const width = 256
+    const height = 256
+    // The slow part is creating the maps, which is now optimized.
+    const reductionMap = createReductionMap(width, height, trees, bbox, zoom)
+    const sourceMap = createPollutionSourceMap(width, height, factories, bbox, zoom)
+
     for (let i = 0; i < tempoBuffer.byteLength; i += 12) {
         for (let j = 0; j < 3; j++) {
             const num = tempoBuffer.getFloat32(i + j * 4, true)
@@ -172,81 +184,80 @@ export const calculatePollutionScore = (
             stats[j].mean += num / (256 * 256)
         }
 
-        const width = 256
-        const height = 256
-        const score = new Uint32Array(width * height)
+        const pixelIndex = i / 12
 
-        // The slow part is creating the maps, which is now optimized.
-        const reductionMap = createReductionMap(width, height, trees, bbox, zoom)
-        const sourceMap = createPollutionSourceMap(width, height, factories, bbox, zoom)
+        const a_base = tempoBuffer.getFloat32(i, true)
+        const b_base = tempoBuffer.getFloat32(i + 4, true)
+        const c_base = tempoBuffer.getFloat32(i + 8, true)
 
-        for (let i = 0; i < tempoBuffer.byteLength; i += 12) {
-            const pixelIndex = i / 12
+        const effectIndex = pixelIndex * 3
 
-            const a_base = tempoBuffer.getFloat32(i, true)
-            const b_base = tempoBuffer.getFloat32(i + 4, true)
-            const c_base = tempoBuffer.getFloat32(i + 8, true)
+        // Using the absolute addition model for factories
+        const a_reduced = a_base * (1 - reductionMap[effectIndex])
+        const b_reduced = b_base * (1 - reductionMap[effectIndex + 1])
+        const c_reduced = c_base * (1 - reductionMap[effectIndex + 2])
 
-            const effectIndex = pixelIndex * 3
+        const a_final = a_reduced + sourceMap[effectIndex]
+        const b_final = b_reduced + sourceMap[effectIndex + 1]
+        const c_final = c_reduced + sourceMap[effectIndex + 2]
 
-            // Using the absolute addition model for factories
-            const a_reduced = a_base * (1 - reductionMap[effectIndex])
-            const b_reduced = b_base * (1 - reductionMap[effectIndex + 1])
-            const c_reduced = c_base * (1 - reductionMap[effectIndex + 2])
+        const a = Math.max(0, a_final)
+        const b = Math.max(0, b_final)
+        const c = Math.max(0, c_final)
 
-            const a_final = a_reduced + sourceMap[effectIndex]
-            const b_final = b_reduced + sourceMap[effectIndex + 1]
-            const c_final = c_reduced + sourceMap[effectIndex + 2]
+        // First, get the raw normalized values
+        const base_nNo2 = normalize(a, 1e15, 5e15)
+        const base_nHcho = normalize(b, 5e15, 2e16)
+        const base_nO3 = normalize(c, 280, 320)
 
-            const a = Math.max(0, a_final)
-            const b = Math.max(0, b_final)
-            const c = Math.max(0, c_final)
+        // Isolate the percentage effect of the cars (a value from -0.24 to +0.24)
+        const carEffect = carMultiplier - 1
 
-            const nNo2 = normalize(a, 1e15, 5e15)
-            const nHcho = normalize(b, 5e15, 2e16)
-            const nO3 = normalize(c, 280, 320)
+        // Apply the weighted effect to each pollutant
+        const nNo2 = base_nNo2 * (1 + carEffect * CAR_IMPACT_ON_NO2)
+        const nHcho = base_nHcho * (1 + carEffect * CAR_IMPACT_ON_HCHO)
+        const nO3 = base_nO3 * (1 + carEffect * CAR_IMPACT_ON_O3)
 
-            const combined = 0.5 * nNo2 + 0.3 * nHcho + 0.2 * nO3
-            scores[i / 12] = Math.round(combined * 100)
-        }
-
-        const png = new PNG({ width: 256, height: 256 })
-
-        for (let i = 0; i < scores.length; i++) {
-            const score = scores[i] // 0..100
-            const o = i * 4
-
-            // normalize and apply a cutoff so very low scores are fully invisible
-            const tRaw = Math.max(0, Math.min(1, score / 100)) // 0..1 over full range
-            const cutoff = 0.5 // invisible until 25%
-            const t = tRaw <= cutoff ? 0 : (tRaw - cutoff) / (1 - cutoff) // remap to 0..1
-
-            // smooth ramp so mid/high stand out more
-            const ease = t * t * (3 - 2 * t) // smoothstep
-
-            // lighten → darken brown as opacity increases
-            // lightBrown = #B3874A (179,135,74), darkBrown = #3A2A00 (58,42,0)
-            const lr = 179,
-                lg = 135,
-                lb = 74
-            const dr = 58,
-                dg = 42,
-                db = 0
-            const r = Math.round(lr + (dr - lr) * ease)
-            const g = Math.round(lg + (dg - lg) * ease)
-            const b = Math.round(lb + (db - lb) * ease)
-
-            // alpha: jump to a visible floor, then ramp to 10
-            const alphaFloor = 2 // small but noticeable
-            const a = t === 0 ? 0 : alphaFloor + Math.round((20 - alphaFloor) * ease)
-
-            png.data[o] = r
-            png.data[o + 1] = g
-            png.data[o + 2] = b
-            png.data[o + 3] = a
-        }
-
-        console.log(stats)
-        return PNG.sync.write(png)
+        const combined = 0.5 * nNo2 + 0.3 * nHcho + 0.2 * nO3
+        scores[i / 12] = Math.round(combined * 100)
     }
+
+    const png = new PNG({ width: 256, height: 256 })
+
+    for (let i = 0; i < scores.length; i++) {
+        const score = scores[i] // 0..100
+        const o = i * 4
+
+        // normalize and apply a cutoff so very low scores are fully invisible
+        const tRaw = Math.max(0, Math.min(1, score / 100)) // 0..1 over full range
+        const cutoff = 0.5 // invisible until 25%
+        const t = tRaw <= cutoff ? 0 : (tRaw - cutoff) / (1 - cutoff) // remap to 0..1
+
+        // smooth ramp so mid/high stand out more
+        const ease = t * t * (3 - 2 * t) // smoothstep
+
+        // lighten → darken brown as opacity increases
+        // lightBrown = #B3874A (179,135,74), darkBrown = #3A2A00 (58,42,0)
+        const lr = 179,
+            lg = 135,
+            lb = 74
+        const dr = 58,
+            dg = 42,
+            db = 0
+        const r = Math.round(lr + (dr - lr) * ease)
+        const g = Math.round(lg + (dg - lg) * ease)
+        const b = Math.round(lb + (db - lb) * ease)
+
+        // alpha: jump to a visible floor, then ramp to 10
+        const alphaFloor = 2 // small but noticeable
+        const a = t === 0 ? 0 : alphaFloor + Math.round((20 - alphaFloor) * ease)
+
+        png.data[o] = r
+        png.data[o + 1] = g
+        png.data[o + 2] = b
+        png.data[o + 3] = a
+    }
+
+    console.log(stats)
+    return PNG.sync.write(png)
 }
