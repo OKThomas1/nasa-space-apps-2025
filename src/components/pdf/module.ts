@@ -164,21 +164,55 @@ export const takeMapScreenshot = async (map: MapRef) => {
     pdf.save(`map-${new Date().toISOString().replace(/[:.]/g, "-")}.pdf`)
 }
 
-export const interpolateColor = (color1: string, color2: string, ratio: number): string => {
-    const hex1 = color1.replace("#", "")
-    const hex2 = color2.replace("#", "")
+type RGB = { r: number; g: number; b: number }
 
-    const r1 = parseInt(hex1.substring(0, 2), 16)
-    const g1 = parseInt(hex1.substring(2, 4), 16)
-    const b1 = parseInt(hex1.substring(4, 6), 16)
+const hexToRgb = (hex: string): RGB => {
+    const h = hex.replace("#", "")
+    const v =
+        h.length === 3
+            ? h
+                  .split("")
+                  .map((c) => c + c)
+                  .join("")
+            : h
+    const r = parseInt(v.slice(0, 2), 16)
+    const g = parseInt(v.slice(2, 4), 16)
+    const b = parseInt(v.slice(4, 6), 16)
+    return { r, g, b }
+}
 
-    const r2 = parseInt(hex2.substring(0, 2), 16)
-    const g2 = parseInt(hex2.substring(2, 4), 16)
-    const b2 = parseInt(hex2.substring(4, 6), 16)
+const lerp = (a: number, b: number, t: number) => Math.round(a + (b - a) * t)
 
-    const r = Math.round(r1 + (r2 - r1) * ratio)
-    const g = Math.round(g1 + (g2 - g1) * ratio)
-    const b = Math.round(b1 + (b2 - b1) * ratio)
+const rgbToCss = ({ r, g, b }: RGB) => `rgb(${r}, ${g}, ${b})`
 
-    return `rgb(${r}, ${g}, ${b})`
+/**
+ * Generate an array of CSS rgb() strings interpolated across N colors.
+ * @param hexes  Ordered list of >= 2 hex colors.
+ * @param steps  Number of output colors (>= 2).
+ */
+export const interpolateGradient = (hexes: string[], steps: number): string[] => {
+    if (hexes.length < 2) throw new Error("interpolateGradient: need at least two colors")
+    if (steps < 2) throw new Error("interpolateGradient: steps must be >= 2")
+
+    const rgbs = hexes.map(hexToRgb)
+    const segments = rgbs.length - 1
+    const out: string[] = []
+
+    for (let i = 0; i < steps; i++) {
+        const t = i / (steps - 1) // 0..1
+        // map t to a segment
+        const segFloat = t * segments
+        const seg = Math.min(Math.floor(segFloat), segments - 1)
+        const localT = segFloat - seg
+        const a = rgbs[seg]
+        const b = rgbs[seg + 1]
+        out.push(
+            rgbToCss({
+                r: lerp(a.r, b.r, localT),
+                g: lerp(a.g, b.g, localT),
+                b: lerp(a.b, b.b, localT),
+            })
+        )
+    }
+    return out
 }
