@@ -1,7 +1,7 @@
 import "maplibre-gl/dist/maplibre-gl.css"
 import Map from "react-map-gl/maplibre"
 import { useLayers } from "../hooks/useLayers"
-import { PlaceableLayer } from "../PlaceableLayer"
+import { PlaceableBubbleLayer, PlaceableLayer } from "../PlaceableLayer"
 import { ToolPlacementLayer } from "../ToolPlacementLayer"
 import { DeckGLOverlay } from "./DeckglOverlay"
 
@@ -29,6 +29,7 @@ export const MapView = () => {
                 <DeckGLOverlay interleaved={true} layers={layers} />
 
                 <PlaceableLayer />
+                <PlaceableBubbleLayer />
                 <ToolPlacementLayer />
             </Map>
         </div>

@@ -19,7 +19,7 @@ export interface LayerSlider {
 
 const LayerSlidersMap: Record<LayerSlider["layer"], LayerSlider> = {
     pollution: buildSlider({ layer: "pollution", min: 0, max: 100, step: 1, icon: <Slider /> }),
-    poverty: buildSlider({ layer: "poverty", min: 0, max: 100, step: 1, icon: <Slider /> }),
+    cars: buildSlider({ layer: "cars", min: 0, max: 50, step: 1, icon: <Slider /> }),
 }
 
 const LayerSlidersList = Object.values(LayerSlidersMap)

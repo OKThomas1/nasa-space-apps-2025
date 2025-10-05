@@ -1,4 +1,4 @@
-import ElectricBoltIcon from "@mui/icons-material/ElectricBolt"
+import FactoryIcon from "@mui/icons-material/Factory"
 import ParkIcon from "@mui/icons-material/Park"
 import type { ReactNode } from "react"
 
@@ -9,7 +9,7 @@ const buildTool = ({ displayName, icon, id }: Tool): Tool => ({
 })
 
 export interface Tool {
-    id: "tree" | "power-plant"
+    id: "tree" | "factory"
     displayName: string
     icon: ReactNode
 }
@@ -20,10 +20,10 @@ const ToolsMap: Record<Tool["id"], Tool> = {
         icon: <ParkIcon sx={{ color: "green" }} />,
         id: "tree",
     }),
-    "power-plant": buildTool({
-        displayName: "PowerPlant",
-        icon: <ElectricBoltIcon sx={{ color: "green" }} />,
-        id: "power-plant",
+    factory: buildTool({
+        displayName: "Factory",
+        icon: <FactoryIcon sx={{ color: "brown" }} />,
+        id: "factory",
     }),
 }
 

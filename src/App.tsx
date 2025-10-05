@@ -20,6 +20,13 @@ function App() {
                 <div className="absolute flex gap-4 bottom-4 w-full max-h-32 h-full justify-center pointer-events-none [&>*]:pointer-events-auto">
                     <ToolBar />
                     <TimeToolbar />
+
+                    <Button
+                        variant={snapshotIsOpen ? "contained" : "outlined"}
+                        onClick={() => setSnapshotIsOpen((prev) => !prev)}
+                    >
+                        Toggle PDF
+                    </Button>
                 </div>
 
                 {/* Right Bar */}
@@ -28,27 +35,11 @@ function App() {
                 </div>
 
                 <div className="absolute flex flex-col justify-center left-4 bottom-0 h-full w-full pointer-events-none [&>*]:pointer-events-auto">
-                    <div className="pointer-events-auto">
-                        <FiltersMenu />
-                    </div>
+                    <FiltersMenu />
                 </div>
 
                 {/* PDF Snapshot */}
                 {snapshotIsOpen && <PDFSnapshot />}
-
-                {/* Footer */}
-                <footer
-                    id="footer"
-                    className="absolute bottom-8 left-8 right-8 bg-white/10 text-white flex gap-8 items-center justify-center"
-                >
-                    <Button
-                        variant={snapshotIsOpen ? "contained" : "outlined"}
-                        onClick={() => setSnapshotIsOpen((prev) => !prev)}
-                    >
-                        Toggle PDF
-                    </Button>
-                    This is the footer!
-                </footer>
             </div>
         </MapProvider>
     )

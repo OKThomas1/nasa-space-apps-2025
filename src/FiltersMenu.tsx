@@ -1,18 +1,11 @@
 import Slider from "@mui/material/Slider"
 import Switch from "@mui/material/Switch"
-import { FunctionComponent, useEffect } from "react"
+import { FunctionComponent } from "react"
 import { useFiltersContext } from "./FiltersContext"
 import { LayerSlidersList } from "./LayerSliders"
 
 export const FiltersMenu: FunctionComponent = () => {
     const { sliderValues, setSliderValues, iconToggles, setIconToggles } = useFiltersContext()
-
-    // Initialize context values if empty
-    useEffect(() => {
-        if (sliderValues.length === 0) {
-            setSliderValues(LayerSlidersList.map((layer) => (layer.max - layer.min) / 2))
-        }
-    }, [sliderValues, setSliderValues])
 
     const handleChange = (index: number, newValue: number) => {
         const updated = [...sliderValues]
@@ -37,7 +30,7 @@ export const FiltersMenu: FunctionComponent = () => {
                     <div key={layer.layer} className="flex flex-col items-center w-[130px]">
                         <small className="font-medium capitalize">{layer.layer}</small>
                         <Slider
-                            value={sliderValues[index] ?? (layer.max - layer.min) / 2}
+                            value={sliderValues[index]}
                             min={layer.min}
                             max={layer.max}
                             step={layer.step}
@@ -51,7 +44,7 @@ export const FiltersMenu: FunctionComponent = () => {
             <div className="border-t border-gray-800 w-full"></div>
             <h3 className="text-xl font-semibold text-gray-800">Icon Toggles</h3>
             <div className="flex flex-col flex-wrap items-center gap-2">
-                {["Trees", "PowerPlants"].map((name, index) => (
+                {["Trees", "Factories"].map((name, index) => (
                     <div key={name} className="flex flex-col items-center w-[130px]">
                         <small className="font-medium capitalize">{name}</small>
                         <Switch

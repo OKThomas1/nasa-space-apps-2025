@@ -1,11 +1,164 @@
+import type { GeoBoundingBox } from "@deck.gl/geo-layers"
 import { PNG } from "pngjs"
+import type { Placeable } from "../PlacaebleContext"
 
 function normalize(x: number, low: number, high: number): number {
     if (x < 0) return 0
     return Math.max(0, Math.min(1, (x - low) / (high - low)))
 }
 
-export const calculatePollutionScore = (tempoBuffer: DataView) => {
+// --- TREE CONSTANTS ---
+const TREE_UNIT_POWER = 1.0
+const NO2_REDUCTION_PER_UNIT = 0.05 * TREE_UNIT_POWER
+const HCHO_REDUCTION_PER_UNIT = 0.03 * TREE_UNIT_POWER
+const O3_REDUCTION_PER_UNIT = 0.02 * TREE_UNIT_POWER
+
+// --- FACTORY CONSTANTS (using the absolute addition model) ---
+const FACTORY_NO2_ADDITION = 2e15
+const FACTORY_HCHO_ADDITION = 5e14
+const FACTORY_O3_EFFECT = -5e14
+
+const createReductionMap = (
+    width: number,
+    height: number,
+    trees: Placeable[],
+    bbox: GeoBoundingBox,
+    zoom: number
+) => {
+    const reductionMap = new Float32Array(width * height * 3)
+    const { west, south, east, north } = bbox
+
+    const middleLatitude = (north + south) / 2
+    const earthCircumference = 40075017
+    const metersPerPixel =
+        (earthCircumference * Math.cos(middleLatitude * (Math.PI / 180))) / Math.pow(2, zoom + 8)
+
+    const realWorldRadius = 564
+    const pixelRadius = Math.ceil(realWorldRadius / metersPerPixel)
+    // --- OPTIMIZATION: Pre-calculate squared radius ---
+    const pixelRadiusSquared = pixelRadius * pixelRadius
+
+    // --- OPTIMIZATION: Create a Falloff Lookup Table (LUT) ---
+    const falloffLUT = new Float32Array(pixelRadiusSquared + 1)
+    for (let i = 0; i <= pixelRadiusSquared; i++) {
+        const distance = Math.sqrt(i)
+        const falloff = 1 - distance / pixelRadius
+        falloffLUT[i] = falloff * falloff // Quadratic falloff
+    }
+
+    for (const tree of trees) {
+        const pixelX = Math.floor(((tree.position.lng - west) / (east - west)) * width)
+        const pixelY = Math.floor(((north - tree.position.lat) / (north - south)) * height)
+
+        for (let dx = -pixelRadius; dx <= pixelRadius; dx++) {
+            for (let dy = -pixelRadius; dy <= pixelRadius; dy++) {
+                const distanceSquared = dx * dx + dy * dy
+
+                // --- OPTIMIZATION: Use squared distance check ---
+                if (distanceSquared > pixelRadiusSquared) {
+                    continue
+                }
+
+                const currentX = pixelX + dx
+                const currentY = pixelY + dy
+
+                if (currentX >= 0 && currentX < width && currentY >= 0 && currentY < height) {
+                    // --- OPTIMIZATION: Get falloff from LUT ---
+                    const falloff = falloffLUT[distanceSquared]
+                    const index = (currentY * width + currentX) * 3
+
+                    reductionMap[index] = Math.min(
+                        0.95,
+                        reductionMap[index] + NO2_REDUCTION_PER_UNIT * falloff
+                    )
+                    reductionMap[index + 1] = Math.min(
+                        0.95,
+                        reductionMap[index + 1] + HCHO_REDUCTION_PER_UNIT * falloff
+                    )
+                    reductionMap[index + 2] = Math.min(
+                        0.95,
+                        reductionMap[index + 2] + O3_REDUCTION_PER_UNIT * falloff
+                    )
+                }
+            }
+        }
+    }
+    return reductionMap
+}
+
+const createPollutionSourceMap = (
+    width: number,
+    height: number,
+    factories: Placeable[],
+    bbox: GeoBoundingBox,
+    zoom: number
+) => {
+    const sourceMap = new Float32Array(width * height * 3)
+    const { west, south, east, north } = bbox
+
+    const middleLatitude = (north + south) / 2
+    const earthCircumference = 40075017
+    const metersPerPixel =
+        (earthCircumference * Math.cos(middleLatitude * (Math.PI / 180))) / Math.pow(2, zoom + 8)
+
+    const realWorldRadius = 1500
+    const pixelRadius = Math.ceil(realWorldRadius / metersPerPixel)
+    // --- OPTIMIZATION: Pre-calculate squared radius ---
+    const pixelRadiusSquared = pixelRadius * pixelRadius
+
+    // --- OPTIMIZATION: Create a Falloff Lookup Table (LUT) ---
+    const falloffLUT = new Float32Array(pixelRadiusSquared + 1)
+    for (let i = 0; i <= pixelRadiusSquared; i++) {
+        const distance = Math.sqrt(i)
+        const falloff = 1 - distance / pixelRadius
+        falloffLUT[i] = falloff * falloff // Quadratic falloff
+    }
+
+    for (const factory of factories) {
+        const pixelX = Math.floor(((factory.position.lng - west) / (east - west)) * width)
+        const pixelY = Math.floor(((north - factory.position.lat) / (north - south)) * height)
+
+        for (let dx = -pixelRadius; dx <= pixelRadius; dx++) {
+            for (let dy = -pixelRadius; dy <= pixelRadius; dy++) {
+                const distanceSquared = dx * dx + dy * dy
+
+                // --- OPTIMIZATION: Use squared distance check ---
+                if (distanceSquared > pixelRadiusSquared) {
+                    continue
+                }
+
+                const currentX = pixelX + dx
+                const currentY = pixelY + dy
+
+                if (currentX >= 0 && currentX < width && currentY >= 0 && currentY < height) {
+                    // --- OPTIMIZATION: Get falloff from LUT ---
+                    const falloff = falloffLUT[distanceSquared]
+                    const index = (currentY * width + currentX) * 3
+
+                    sourceMap[index] += FACTORY_NO2_ADDITION * falloff
+                    sourceMap[index + 1] += FACTORY_HCHO_ADDITION * falloff
+                    sourceMap[index + 2] += FACTORY_O3_EFFECT * falloff
+                }
+            }
+        }
+    }
+    return sourceMap
+}
+
+const CAR_IMPACT_ON_NO2 = 1.0 // Direct source, full impact
+const CAR_IMPACT_ON_O3 = 0.6 // Significant secondary pollutant
+const CAR_IMPACT_ON_HCHO = 0.4 // Less significant secondary pollutant
+
+export const calculatePollutionScore = (
+    tempoBuffer: DataView,
+    carMultiplier: number,
+    trees: Placeable[],
+    factories: Placeable[],
+    bbox: GeoBoundingBox,
+    zoom: number
+) => {
+    // --- THIS SECTION IS UNCHANGED, AS THE BOTTLENECK WAS IN THE HELPER FUNCTIONS ---
+
     if (tempoBuffer.byteLength !== 4 * 3 * 256 * 256)
         throw new Error(
             "Expected buffer of length " +
@@ -13,8 +166,16 @@ export const calculatePollutionScore = (tempoBuffer: DataView) => {
                 " found length " +
                 tempoBuffer.byteLength
         )
+
     const scores = new Uint32Array(256 * 256)
     const stats = Array.from({ length: 3 }).map(() => ({ min: Infinity, max: -Infinity, mean: 0 }))
+
+    const width = 256
+    const height = 256
+    // The slow part is creating the maps, which is now optimized.
+    const reductionMap = createReductionMap(width, height, trees, bbox, zoom)
+    const sourceMap = createPollutionSourceMap(width, height, factories, bbox, zoom)
+
     for (let i = 0; i < tempoBuffer.byteLength; i += 12) {
         for (let j = 0; j < 3; j++) {
             const num = tempoBuffer.getFloat32(i + j * 4, true)
@@ -23,13 +184,39 @@ export const calculatePollutionScore = (tempoBuffer: DataView) => {
             stats[j].mean += num / (256 * 256)
         }
 
-        const a = tempoBuffer.getFloat32(i, true)
-        const b = tempoBuffer.getFloat32(i + 4, true)
-        const c = tempoBuffer.getFloat32(i + 8, true)
+        const pixelIndex = i / 12
 
-        const nNo2 = normalize(a, 1e15, 5e15)
-        const nHcho = normalize(b, 5e15, 2e16)
-        const nO3 = normalize(c, 280, 320)
+        const a_base = tempoBuffer.getFloat32(i, true)
+        const b_base = tempoBuffer.getFloat32(i + 4, true)
+        const c_base = tempoBuffer.getFloat32(i + 8, true)
+
+        const effectIndex = pixelIndex * 3
+
+        // Using the absolute addition model for factories
+        const a_reduced = a_base * (1 - reductionMap[effectIndex])
+        const b_reduced = b_base * (1 - reductionMap[effectIndex + 1])
+        const c_reduced = c_base * (1 - reductionMap[effectIndex + 2])
+
+        const a_final = a_reduced + sourceMap[effectIndex]
+        const b_final = b_reduced + sourceMap[effectIndex + 1]
+        const c_final = c_reduced + sourceMap[effectIndex + 2]
+
+        const a = Math.max(0, a_final)
+        const b = Math.max(0, b_final)
+        const c = Math.max(0, c_final)
+
+        // First, get the raw normalized values
+        const base_nNo2 = normalize(a, 1e15, 5e15)
+        const base_nHcho = normalize(b, 5e15, 2e16)
+        const base_nO3 = normalize(c, 280, 320)
+
+        // Isolate the percentage effect of the cars (a value from -0.24 to +0.24)
+        const carEffect = carMultiplier - 1
+
+        // Apply the weighted effect to each pollutant
+        const nNo2 = base_nNo2 * (1 + carEffect * CAR_IMPACT_ON_NO2)
+        const nHcho = base_nHcho * (1 + carEffect * CAR_IMPACT_ON_HCHO)
+        const nO3 = base_nO3 * (1 + carEffect * CAR_IMPACT_ON_O3)
 
         const combined = 0.5 * nNo2 + 0.3 * nHcho + 0.2 * nO3
         scores[i / 12] = Math.round(combined * 100)
