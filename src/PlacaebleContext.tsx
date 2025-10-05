@@ -15,6 +15,7 @@ export interface Placeable {
     type: Tool["id"]
     position: LngLat
     icon: ReactNode
+    radius: number
 }
 
 interface PlaceableContext {
@@ -42,6 +43,7 @@ const PlaceableProvider: FunctionComponent<PropsWithChildren> = ({ children }) =
             id: crypto.randomUUID(),
             position: placeable.position,
             type: placeable.type,
+            radius: ToolsMap[placeable.type].radius,
         }
         setPlaced((prev) => [...prev, newPlaceable])
     }

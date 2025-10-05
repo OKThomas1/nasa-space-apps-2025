@@ -20,9 +20,8 @@ const PlaceableBubbleLayer = () => {
 
         const features = items.map((placeable) => {
             const center = [placeable.position.lng, placeable.position.lat]
-            const radius = 564
 
-            return createCirclePolygon(center, radius)
+            return createCirclePolygon(center, placeable.radius)
         })
 
         return {
