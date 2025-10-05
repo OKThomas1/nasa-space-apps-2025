@@ -53,7 +53,7 @@ const handler = async (req: Request, res: Response) => {
             }
             mkdirSync(`./data/wind/${z}/${x}`, { recursive: true })
             const buffer = await fetch(
-                `https://tile.openweathermap.org/map/wind_new/${z}/${x}/${y}?appid=90f50fddaed05721572338f7012f4455&day=2025-10-04T00:40`
+                `https://tile.openweathermap.org/map/wind_new/${z}/${x}/${y}?appid=${process.env["WEATHER_API_KEY"]}&day=2025-10-04T00:40`
             ).then((res) => res.arrayBuffer())
             await fs.writeFile(`./data/wind/${z}/${x}/${y}.png`, Buffer.from(buffer))
             return buffer
