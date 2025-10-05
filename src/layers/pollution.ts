@@ -17,12 +17,14 @@ export const pollutionLayer = ({
     factories,
     cars,
     opacity,
+    threshold,
     trees,
     time,
     showWeather = false,
 }: {
     opacity: number
     cars: number
+    threshold: number
     trees: Placeable[]
     factories: Placeable[]
     time: number
@@ -36,7 +38,7 @@ export const pollutionLayer = ({
         refinementStrategy: "no-overlap",
         maxCacheSize: Infinity,
         updateTriggers: {
-            getTileData: [trees.length, factories.length, cars, time, showWeather],
+            getTileData: [trees.length, factories.length, cars, time, showWeather, threshold],
         },
 
         getTileData: async (tile) => {
@@ -80,6 +82,7 @@ export const pollutionLayer = ({
                         dv,
                         carMultiplier,
                         trees,
+                        threshold,
                         factories,
                         tile.bbox as GeoBoundingBox,
                         tile.zoom ?? 0,

@@ -19,7 +19,7 @@ function App() {
                 <MapView onLoad={() => setMapLoaded(true)} ref={mapRef} />
 
                 {/* Bottom Bar */}
-                <div className="absolute flex gap-4 bottom-4 w-full max-h-16 h-full justify-center items-end pointer-events-none [&>*]:pointer-events-auto">
+                <div className="absolute flex gap-4 bottom-4 w-full max-h-32 h-full justify-center items-end pointer-events-none [&>*]:pointer-events-auto">
                     <ToolBar />
                     <TimeToolbar />
 
