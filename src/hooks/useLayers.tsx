@@ -8,5 +8,7 @@ export const useLayers = () => {
     const trees = items.filter((item) => item.type === "tree")
     const factories = items.filter((item) => item.type === "factory")
 
-    return [pollutionLayer(sliderValues[0] / 100, trees, factories)]
+    return [
+        pollutionLayer({ opacity: sliderValues[0] / 100, cars: sliderValues[1], trees, factories }),
+    ]
 }

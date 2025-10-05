@@ -147,6 +147,7 @@ const createPollutionSourceMap = (
 
 export const calculatePollutionScore = (
     tempoBuffer: DataView,
+    carMultiplier: number,
     trees: Placeable[],
     factories: Placeable[],
     bbox: GeoBoundingBox,
