@@ -23,7 +23,7 @@ export const FiltersMenu: FunctionComponent = () => {
 
     return (
         <div className="flex flex-col gap-3 items-center bg-gray-100 p-2 rounded-lg w-fit text-center">
-            <h3 className="text-xl font-semibold text-gray-800">Layer Opacity Controls</h3>
+            <h3 className="text-xl font-semibold text-gray-800">Layer Controls</h3>
 
             <div className="flex flex-col flex-wrap items-center gap-6">
                 {LayerSlidersList.map((layer, index) => (

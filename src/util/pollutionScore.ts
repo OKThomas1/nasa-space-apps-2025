@@ -143,6 +143,7 @@ export const calculatePollutionScore = (
     tempoBuffer: DataView,
     carMultiplier: number,
     trees: Placeable[],
+    threshhold: number,
     factories: Placeable[],
     bbox: GeoBoundingBox,
     zoom: number,
@@ -222,9 +223,9 @@ export const calculatePollutionScore = (
         const score = scores[i] // 0..100
         const o = i * 4
 
-        const tRaw = Math.max(0, Math.min(1, score / 100))
-        const cutoff = 0.2
-        const t = tRaw <= cutoff ? 0 : (tRaw - cutoff) / (1 - cutoff)
+        // normalize and apply a cutoff so very low scores are fully invisible
+        const tRaw = Math.max(0, Math.min(1, score / 100)) // 0..1 over full range
+        const t = tRaw <= threshhold ? 0 : (tRaw - threshhold) / (1 - threshhold) // remap to 0..1
 
         const ease = t * t * (3 - 2 * t)
 

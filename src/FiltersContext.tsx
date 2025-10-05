@@ -21,7 +21,7 @@ const FiltersContext = createContext<FiltersContext | undefined>(undefined)
 
 export const FiltersProvider: FunctionComponent<PropsWithChildren> = ({ children }) => {
     const [sliderValues, setSliderValues] = useState<number[]>(
-        LayerSlidersList.map((layer) => (layer.max + layer.min) / 2)
+        LayerSlidersList.map((layer) => layer.defaultValue ?? (layer.max + layer.min) / 2)
     )
     const [iconToggles, setIconToggles] = useState<boolean[]>(LayerSlidersList.map(() => true))
     const [weatherEnabled, setWeatherEnabled] = useState(false)

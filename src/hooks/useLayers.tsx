@@ -14,6 +14,7 @@ export const useLayers = () => {
         pollutionLayer({
             opacity: sliderValues[0],
             cars: sliderValues[1],
+            threshold: sliderValues[2],
             trees,
             factories,
             time: time || 0,
