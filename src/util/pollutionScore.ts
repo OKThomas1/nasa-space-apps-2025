@@ -1,13 +1,14 @@
 import type { GeoBoundingBox } from "@deck.gl/geo-layers"
 import { PNG } from "pngjs"
 import type { Placeable } from "../PlacaebleContext"
+import { ToolsMap } from "../Tools"
 
 function normalize(x: number, low: number, high: number): number {
     if (x < 0) return 0
     return Math.max(0, Math.min(1, (x - low) / (high - low)))
 }
 
-const TREE_UNIT_POWER = 1.0
+const TREE_UNIT_POWER = 5.0
 const NO2_REDUCTION_PER_UNIT = 0.05 * TREE_UNIT_POWER
 const HCHO_REDUCTION_PER_UNIT = 0.03 * TREE_UNIT_POWER
 const O3_REDUCTION_PER_UNIT = 0.02 * TREE_UNIT_POWER
@@ -31,7 +32,7 @@ const createReductionMap = (
     const metersPerPixel =
         (earthCircumference * Math.cos(middleLatitude * (Math.PI / 180))) / Math.pow(2, zoom + 8)
 
-    const realWorldRadius = 564
+    const realWorldRadius = ToolsMap.tree.radius
     const pixelRadius = Math.ceil(realWorldRadius / metersPerPixel)
     const pixelRadiusSquared = pixelRadius * pixelRadius
 
@@ -95,7 +96,7 @@ const createPollutionSourceMap = (
     const metersPerPixel =
         (earthCircumference * Math.cos(middleLatitude * (Math.PI / 180))) / Math.pow(2, zoom + 8)
 
-    const realWorldRadius = 564
+    const realWorldRadius = ToolsMap.factory.radius
     const pixelRadius = Math.ceil(realWorldRadius / metersPerPixel)
     const pixelRadiusSquared = pixelRadius * pixelRadius
 

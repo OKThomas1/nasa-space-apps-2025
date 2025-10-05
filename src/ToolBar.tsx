@@ -22,7 +22,7 @@ const ToolBar: FunctionComponent = () => {
                             onClick={() => setTool(tool)}
                             sx={{ border: isSelected ? "1px solid blue" : "1px solid transparent" }}
                             className={"flex flex-col"}
-                            title="hello"
+                            title={tool.description}
                         >
                             {tool.icon}
                             <small>{tool.displayName}</small>
