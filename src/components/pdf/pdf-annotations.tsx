@@ -2,11 +2,20 @@ import type { HTMLAttributes } from "react"
 import { cn } from "../../lib/utils"
 import { pollutants } from "./constants"
 import { interpolateGradient } from "./module"
-import type { Pollutant } from "./types"
+import type { Pollutant, PollutionActionables } from "./types"
 
-export const PDFAnnotations = (props: HTMLAttributes<HTMLDivElement>) => {
+export const PDFAnnotations = ({
+    actionables,
+    ...props
+}: HTMLAttributes<HTMLDivElement> & {
+    actionables?: PollutionActionables
+}) => {
     return (
-        <div {...props} className={cn("bg-white p-2 shadow w-full", props.className)}>
+        <div
+            id="pdf-annotations"
+            {...props}
+            className={cn("bg-white p-2 shadow w-full overflow-hidden", props.className)}
+        >
             <div className="mb-1">
                 <h2 className="font-bold text-gray-800 text-center" style={{ fontSize: "0.6rem" }}>
                     Air Quality Legend
@@ -49,12 +58,35 @@ export const PDFAnnotations = (props: HTMLAttributes<HTMLDivElement>) => {
                     ))}
                 </tbody>
             </table>
+
+            {actionables && (
+                <>
+                    <h2
+                        className="font-bold text-gray-800 text-center mt-4 mb-2"
+                        style={{ fontSize: "0.6rem" }}
+                    >
+                        AI-Powered Actionables
+                    </h2>
+                    {actionables.spots.slice(0, 5).map((spot, i) => (
+                        <div key={i} className="mb-2">
+                            <p className="text-[0.5rem] leading-3 font-medium">
+                                {spot.name.split("–")[0]}
+                            </p>
+                            <p className="text-[0.5rem] font-light">{spot.name.split("–")[1]} </p>
+                            <div className="ml-3 font-extralight text-black/70">
+                                <p className="text-[0.5rem]">Action: {spot.action}</p>
+                                <p className="text-[0.5rem]">Rationale: {spot.rationale}</p>
+                            </div>
+                        </div>
+                    ))}
+                </>
+            )}
         </div>
     )
 }
 
 const PollutantRow = ({ pollutant }: { pollutant: Pollutant }) => {
-    const colors = interpolateGradient(pollutant.colors, 10) // 10 boxes like before
+    const colors = interpolateGradient(pollutant.colors, 10)
 
     return (
         <>

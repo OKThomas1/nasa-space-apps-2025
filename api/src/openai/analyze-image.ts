@@ -4,63 +4,92 @@ dotenv.config()
 import { Router } from "express"
 import multer from "multer"
 import OpenAI from "openai"
+import { OpenAIPrompts } from "./constants"
+import { multerFileToBase64 } from "./module"
 
 const router = Router()
-
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 16 * 1024 * 1024 } })
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! })
 
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 16 * 1024 * 1024 } })
-
 router.post("/", upload.single("map"), async (req, res) => {
-    let uploadedFile: (OpenAI.Files.FileObject & { _request_id?: string | null }) | undefined =
-        undefined
+    res.setHeader("Content-Type", "text/event-stream")
+    res.setHeader("Cache-Control", "no-cache")
+    res.setHeader("Connection", "keep-alive")
 
     try {
         const bbox = typeof req.body.bbox === "string" ? JSON.parse(req.body.bbox) : req.body.bbox
 
-        const fileObject = new File(
-            [Buffer.from(req.file!.buffer)],
-            req.file!.originalname || "map.jpg",
-            {
-                type: req.file!.mimetype || "image/jpeg",
-            }
-        )
-
-        uploadedFile = await openai.files.create({
-            file: fileObject,
-            purpose: "vision",
-        })
-
-        const response = await openai.responses.create({
-            prompt: {
-                id: process.env.OPENAI_PROMPT_ID!,
-                variables: {
-                    bbox: JSON.stringify(bbox),
-                },
+        const stream = await openai.responses.create({
+            model: "gpt-5-mini-2025-08-07",
+            reasoning: {
+                summary: "detailed",
+                effort: "medium",
             },
+            stream: true,
+            store: true,
+            include: ["reasoning.encrypted_content"],
+            instructions: OpenAIPrompts.ImageAnalysis.devMessage,
             input: [
                 {
                     role: "user",
-                    content: [{ type: "input_image", file_id: uploadedFile.id, detail: "auto" }],
+                    content: [
+                        {
+                            type: "input_text",
+                            text: OpenAIPrompts.ImageAnalysis.userMessage(bbox),
+                        },
+                        {
+                            type: "input_image",
+                            detail: "auto",
+                            image_url: multerFileToBase64(req.file!),
+                        },
+                    ],
                 },
             ],
-            max_output_tokens: 3600,
+            text: {
+                format: OpenAIPrompts.ImageAnalysis.responseSchema,
+            },
         })
 
-        if (response.status !== "completed")
-            throw new Error(
-                `OpenAI response not completed (not enough token allowance): ${response.status}`
-            )
+        let fullText = ""
 
-        console.log(`Used ${response.usage?.output_tokens} output tokens`)
+        res.write(
+            `${JSON.stringify({
+                type: "step",
+                content: "Analyzing map geography and pollution patterns",
+            })}$`
+        )
 
-        res.status(200).json({ response: response.output_text })
+        for await (const chunk of stream) {
+            switch (chunk.type) {
+                case "response.reasoning_summary_part.done": {
+                    const reasoningLine = chunk.part.text.split("\n")[0].replaceAll("**", "")
+
+                    res.write(
+                        `${JSON.stringify({
+                            type: "step",
+                            content: reasoningLine,
+                        })}$`
+                    )
+                    break
+                }
+                case "response.output_text.done": {
+                    fullText = chunk.text
+                    break
+                }
+            }
+        }
+
+        res.write(
+            `${JSON.stringify({
+                type: "complete",
+                content: JSON.parse(fullText),
+            })}`
+        )
+
+        res.end()
     } catch (error) {
         console.error("Error processing images analysis:", error)
-
-        res.status(500).json({ error: "Internal server error" })
-    } finally {
-        if (uploadedFile) await openai.files.delete(uploadedFile.id).catch(() => {})
+        res.status(500).end()
     }
 })
 
