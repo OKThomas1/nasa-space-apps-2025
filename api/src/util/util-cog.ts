@@ -58,7 +58,6 @@ export const getTileFromCogSource = async (source: Source, x: number, y: number,
             case "application/lzw": {
                 const decoded = lzwDecoder.decodeBlock(tile!.bytes)
                 const decompressedFormatted = new Uint8Array(decoded)
-                console.log(decompressedFormatted.length)
                 return decompressedFormatted
             }
             default:

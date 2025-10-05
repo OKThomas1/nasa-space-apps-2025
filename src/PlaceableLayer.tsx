@@ -20,9 +20,8 @@ const PlaceableBubbleLayer = () => {
 
         const features = items.map((placeable) => {
             const center = [placeable.position.lng, placeable.position.lat]
-            const radius = 564 // Radius in meters for 1km^2 area
+            const radius = 564
 
-            // Use your own function instead of turf!
             return createCirclePolygon(center, radius)
         })
 
@@ -38,10 +37,10 @@ const PlaceableBubbleLayer = () => {
         <Source id="placeable-bubble-source" type="geojson" data={geojson}>
             <Layer
                 id="placeable-bubbles-outline"
-                type="line" // Use "line" for polygon outlines
+                type="line"
                 paint={{
-                    "line-color": "#00000045", // Use "line-color" for the stroke
-                    "line-width": 2, // Set the stroke width in pixels
+                    "line-color": "#00000045",
+                    "line-width": 2,
                 }}
             />
         </Source>
@@ -69,7 +68,7 @@ function createCirclePolygon(center: number[], radiusInMeters: number, points = 
         y = distanceY * Math.sin(theta)
         ret.push([coords.longitude + x, coords.latitude + y])
     }
-    ret.push(ret[0]) // Close the polygon
+    ret.push(ret[0])
 
     return {
         type: "Feature",

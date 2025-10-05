@@ -13,6 +13,8 @@ type FiltersContext = {
     setSliderValues: (values: number[]) => void
     iconToggles: boolean[]
     setIconToggles: (visibility: boolean[]) => void
+    weatherEnabled: boolean
+    setWeatherEnabled: (b: boolean) => void
 }
 
 const FiltersContext = createContext<FiltersContext | undefined>(undefined)
@@ -22,10 +24,18 @@ export const FiltersProvider: FunctionComponent<PropsWithChildren> = ({ children
         LayerSlidersList.map((layer) => (layer.max + layer.min) / 2)
     )
     const [iconToggles, setIconToggles] = useState<boolean[]>(LayerSlidersList.map(() => true))
+    const [weatherEnabled, setWeatherEnabled] = useState(false)
 
     const slidersState = useMemo<FiltersContext>(
-        () => ({ sliderValues, setSliderValues, iconToggles, setIconToggles }),
-        [sliderValues, iconToggles]
+        () => ({
+            sliderValues,
+            setSliderValues,
+            iconToggles,
+            setIconToggles,
+            setWeatherEnabled,
+            weatherEnabled,
+        }),
+        [sliderValues, iconToggles, weatherEnabled]
     )
 
     return <FiltersContext.Provider value={slidersState}>{children}</FiltersContext.Provider>

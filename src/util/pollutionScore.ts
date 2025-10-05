@@ -7,15 +7,13 @@ function normalize(x: number, low: number, high: number): number {
     return Math.max(0, Math.min(1, (x - low) / (high - low)))
 }
 
-// --- TREE CONSTANTS ---
 const TREE_UNIT_POWER = 1.0
 const NO2_REDUCTION_PER_UNIT = 0.05 * TREE_UNIT_POWER
 const HCHO_REDUCTION_PER_UNIT = 0.03 * TREE_UNIT_POWER
 const O3_REDUCTION_PER_UNIT = 0.02 * TREE_UNIT_POWER
 
-// --- FACTORY CONSTANTS (using the absolute addition model) ---
-const FACTORY_NO2_ADDITION = 3e15 // Increased from 2e15
-const FACTORY_HCHO_ADDITION = 7.5e14 // Increased from 5e14
+const FACTORY_NO2_ADDITION = 3e15
+const FACTORY_HCHO_ADDITION = 7.5e14
 const FACTORY_O3_EFFECT = 0
 
 const createReductionMap = (
@@ -35,10 +33,8 @@ const createReductionMap = (
 
     const realWorldRadius = 564
     const pixelRadius = Math.ceil(realWorldRadius / metersPerPixel)
-    // --- OPTIMIZATION: Pre-calculate squared radius ---
     const pixelRadiusSquared = pixelRadius * pixelRadius
 
-    // --- OPTIMIZATION: Create a Falloff Lookup Table (LUT) ---
     const falloffLUT = new Float32Array(pixelRadiusSquared + 1)
     for (let i = 0; i <= pixelRadiusSquared; i++) {
         const distance = Math.sqrt(i)
@@ -54,7 +50,6 @@ const createReductionMap = (
             for (let dy = -pixelRadius; dy <= pixelRadius; dy++) {
                 const distanceSquared = dx * dx + dy * dy
 
-                // --- OPTIMIZATION: Use squared distance check ---
                 if (distanceSquared > pixelRadiusSquared) {
                     continue
                 }
@@ -63,7 +58,6 @@ const createReductionMap = (
                 const currentY = pixelY + dy
 
                 if (currentX >= 0 && currentX < width && currentY >= 0 && currentY < height) {
-                    // --- OPTIMIZATION: Get falloff from LUT ---
                     const falloff = falloffLUT[distanceSquared]
                     const index = (currentY * width + currentX) * 3
 
@@ -101,17 +95,15 @@ const createPollutionSourceMap = (
     const metersPerPixel =
         (earthCircumference * Math.cos(middleLatitude * (Math.PI / 180))) / Math.pow(2, zoom + 8)
 
-    const realWorldRadius = 1500
+    const realWorldRadius = 564
     const pixelRadius = Math.ceil(realWorldRadius / metersPerPixel)
-    // --- OPTIMIZATION: Pre-calculate squared radius ---
     const pixelRadiusSquared = pixelRadius * pixelRadius
 
-    // --- OPTIMIZATION: Create a Falloff Lookup Table (LUT) ---
     const falloffLUT = new Float32Array(pixelRadiusSquared + 1)
     for (let i = 0; i <= pixelRadiusSquared; i++) {
         const distance = Math.sqrt(i)
         const falloff = 1 - distance / pixelRadius
-        falloffLUT[i] = falloff * falloff // Quadratic falloff
+        falloffLUT[i] = falloff * falloff
     }
 
     for (const factory of factories) {
@@ -122,7 +114,6 @@ const createPollutionSourceMap = (
             for (let dy = -pixelRadius; dy <= pixelRadius; dy++) {
                 const distanceSquared = dx * dx + dy * dy
 
-                // --- OPTIMIZATION: Use squared distance check ---
                 if (distanceSquared > pixelRadiusSquared) {
                     continue
                 }
@@ -131,7 +122,6 @@ const createPollutionSourceMap = (
                 const currentY = pixelY + dy
 
                 if (currentX >= 0 && currentX < width && currentY >= 0 && currentY < height) {
-                    // --- OPTIMIZATION: Get falloff from LUT ---
                     const falloff = falloffLUT[distanceSquared]
                     const index = (currentY * width + currentX) * 3
 
@@ -145,9 +135,9 @@ const createPollutionSourceMap = (
     return sourceMap
 }
 
-const CAR_IMPACT_ON_NO2 = 1.0 // Direct source, full impact
-const CAR_IMPACT_ON_O3 = 0.6 // Significant secondary pollutant
-const CAR_IMPACT_ON_HCHO = 0.4 // Less significant secondary pollutant
+const CAR_IMPACT_ON_NO2 = 1.0
+const CAR_IMPACT_ON_O3 = 0.6
+const CAR_IMPACT_ON_HCHO = 0.4
 
 export const calculatePollutionScore = (
     tempoBuffer: DataView,
@@ -155,10 +145,9 @@ export const calculatePollutionScore = (
     trees: Placeable[],
     factories: Placeable[],
     bbox: GeoBoundingBox,
-    zoom: number
+    zoom: number,
+    weatherBuffer?: Uint8Array
 ) => {
-    // --- THIS SECTION IS UNCHANGED, AS THE BOTTLENECK WAS IN THE HELPER FUNCTIONS ---
-
     if (tempoBuffer.byteLength !== 4 * 3 * 256 * 256)
         throw new Error(
             "Expected buffer of length " +
@@ -167,12 +156,20 @@ export const calculatePollutionScore = (
                 tempoBuffer.byteLength
         )
 
-    const scores = new Uint32Array(256 * 256)
+    if (weatherBuffer && weatherBuffer.length !== 2 * 256 * 256) {
+        throw new Error(
+            "Expected weather buffer of length " +
+                2 * 256 * 256 +
+                " found length " +
+                tempoBuffer.byteLength
+        )
+    }
+
+    const scores = new Uint8Array(256 * 256)
     const stats = Array.from({ length: 3 }).map(() => ({ min: Infinity, max: -Infinity, mean: 0 }))
 
     const width = 256
     const height = 256
-    // The slow part is creating the maps, which is now optimized.
     const reductionMap = createReductionMap(width, height, trees, bbox, zoom)
     const sourceMap = createPollutionSourceMap(width, height, factories, bbox, zoom)
 
@@ -192,7 +189,6 @@ export const calculatePollutionScore = (
 
         const effectIndex = pixelIndex * 3
 
-        // Using the absolute addition model for factories
         const a_reduced = a_base * (1 - reductionMap[effectIndex])
         const b_reduced = b_base * (1 - reductionMap[effectIndex + 1])
         const c_reduced = c_base * (1 - reductionMap[effectIndex + 2])
@@ -205,21 +201,19 @@ export const calculatePollutionScore = (
         const b = Math.max(0, b_final)
         const c = Math.max(0, c_final)
 
-        // First, get the raw normalized values
         const base_nNo2 = normalize(a, 1e15, 5e15)
         const base_nHcho = normalize(b, 5e15, 2e16)
         const base_nO3 = normalize(c, 280, 320)
 
-        // Isolate the percentage effect of the cars (a value from -0.24 to +0.24)
         const carEffect = carMultiplier - 1
 
-        // Apply the weighted effect to each pollutant
         const nNo2 = base_nNo2 * (1 + carEffect * CAR_IMPACT_ON_NO2)
         const nHcho = base_nHcho * (1 + carEffect * CAR_IMPACT_ON_HCHO)
         const nO3 = base_nO3 * (1 + carEffect * CAR_IMPACT_ON_O3)
 
-        const combined = 0.5 * nNo2 + 0.3 * nHcho + 0.2 * nO3
-        scores[i / 12] = Math.round(combined * 100)
+        scores[i / 12] = weatherBuffer
+            ? pollutionScore(nNo2, nHcho, nO3, weatherBuffer[i / 12], weatherBuffer[i / 12 + 1])
+            : Math.round((0.45 * nNo2 + 0.45 * nHcho + 0.1 * nO3) * 100)
     }
 
     const png = new PNG({ width: 256, height: 256 })
@@ -228,16 +222,12 @@ export const calculatePollutionScore = (
         const score = scores[i] // 0..100
         const o = i * 4
 
-        // normalize and apply a cutoff so very low scores are fully invisible
-        const tRaw = Math.max(0, Math.min(1, score / 100)) // 0..1 over full range
-        const cutoff = 0.2 // invisible until 25%
-        const t = tRaw <= cutoff ? 0 : (tRaw - cutoff) / (1 - cutoff) // remap to 0..1
+        const tRaw = Math.max(0, Math.min(1, score / 100))
+        const cutoff = 0.2
+        const t = tRaw <= cutoff ? 0 : (tRaw - cutoff) / (1 - cutoff)
 
-        // smooth ramp so mid/high stand out more
-        const ease = t * t * (3 - 2 * t) // smoothstep
+        const ease = t * t * (3 - 2 * t)
 
-        // lighten → darken brown as opacity increases
-        // lightBrown = #B3874A (179,135,74), darkBrown = #3A2A00 (58,42,0)
         const lr = 179,
             lg = 135,
             lb = 74
@@ -248,8 +238,7 @@ export const calculatePollutionScore = (
         const g = Math.round(lg + (dg - lg) * ease)
         const b = Math.round(lb + (db - lb) * ease)
 
-        // alpha: jump to a visible floor, then ramp to 10
-        const alphaFloor = 2 // small but noticeable
+        const alphaFloor = 2
         const a = t === 0 ? 0 : alphaFloor + Math.round((20 - alphaFloor) * ease)
 
         png.data[o] = r
@@ -259,4 +248,33 @@ export const calculatePollutionScore = (
     }
 
     return PNG.sync.write(png)
+}
+
+function pollutionScore(
+    nNo2: number,
+    nHcho: number,
+    nO3: number,
+    wind: number,
+    rain: number
+): number {
+    const pW = wind / 100
+    const pR = rain / 100
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const dispersion = Math.exp(-1.2 * pW - 0.8 * pR) / ((window as any).weatherMult || 1)
+
+    const sNo2 = Math.exp(-0.6 * pR)
+    const sHcho = Math.exp(-1.0 * pR)
+    const sO3 = Math.exp(-0.3 * pR)
+
+    const wNo2 = 0.45
+    const wHcho = 0.45
+    const wO3 = 0.1
+
+    const adjNo2 = nNo2 * sNo2 * dispersion
+    const adjHcho = nHcho * sHcho * dispersion
+    const adjO3 = nO3 * sO3 * dispersion
+
+    const weighted = wNo2 * adjNo2 + wHcho * adjHcho + wO3 * adjO3
+    return Math.round(weighted * 100)
 }
