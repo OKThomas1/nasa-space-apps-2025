@@ -42,7 +42,6 @@ export const pollutionLayer = ({
             }
 
             const carMultiplier = 1 + ((cars - 25) / 25) * 0.24
-            console.log({ opacity, cars, trees, factories })
 
             const b = new Blob([
                 Buffer.from(

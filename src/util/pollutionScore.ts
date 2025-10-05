@@ -14,9 +14,9 @@ const HCHO_REDUCTION_PER_UNIT = 0.03 * TREE_UNIT_POWER
 const O3_REDUCTION_PER_UNIT = 0.02 * TREE_UNIT_POWER
 
 // --- FACTORY CONSTANTS (using the absolute addition model) ---
-const FACTORY_NO2_ADDITION = 2e15
-const FACTORY_HCHO_ADDITION = 5e14
-const FACTORY_O3_EFFECT = -5e14
+const FACTORY_NO2_ADDITION = 3e15 // Increased from 2e15
+const FACTORY_HCHO_ADDITION = 7.5e14 // Increased from 5e14
+const FACTORY_O3_EFFECT = 0
 
 const createReductionMap = (
     width: number,
@@ -43,7 +43,7 @@ const createReductionMap = (
     for (let i = 0; i <= pixelRadiusSquared; i++) {
         const distance = Math.sqrt(i)
         const falloff = 1 - distance / pixelRadius
-        falloffLUT[i] = falloff * falloff // Quadratic falloff
+        falloffLUT[i] = falloff
     }
 
     for (const tree of trees) {
@@ -115,8 +115,8 @@ const createPollutionSourceMap = (
     }
 
     for (const factory of factories) {
-        const pixelX = Math.floor(((factory.position.lng - west) / (east - west)) * width)
-        const pixelY = Math.floor(((north - factory.position.lat) / (north - south)) * height)
+        const pixelX = Math.round(((factory.position.lng - west) / (east - west)) * width)
+        const pixelY = Math.round(((north - factory.position.lat) / (north - south)) * height)
 
         for (let dx = -pixelRadius; dx <= pixelRadius; dx++) {
             for (let dy = -pixelRadius; dy <= pixelRadius; dy++) {
@@ -230,7 +230,7 @@ export const calculatePollutionScore = (
 
         // normalize and apply a cutoff so very low scores are fully invisible
         const tRaw = Math.max(0, Math.min(1, score / 100)) // 0..1 over full range
-        const cutoff = 0.5 // invisible until 25%
+        const cutoff = 0.2 // invisible until 25%
         const t = tRaw <= cutoff ? 0 : (tRaw - cutoff) / (1 - cutoff) // remap to 0..1
 
         // smooth ramp so mid/high stand out more
@@ -258,6 +258,5 @@ export const calculatePollutionScore = (
         png.data[o + 3] = a
     }
 
-    console.log(stats)
     return PNG.sync.write(png)
 }

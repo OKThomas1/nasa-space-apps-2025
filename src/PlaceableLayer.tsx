@@ -40,8 +40,8 @@ const PlaceableBubbleLayer = () => {
                 id="placeable-bubbles-outline"
                 type="line" // Use "line" for polygon outlines
                 paint={{
-                    "line-color": "#000000", // Use "line-color" for the stroke
-                    "line-width": 4, // Set the stroke width in pixels
+                    "line-color": "#00000045", // Use "line-color" for the stroke
+                    "line-width": 2, // Set the stroke width in pixels
                 }}
             />
         </Source>
